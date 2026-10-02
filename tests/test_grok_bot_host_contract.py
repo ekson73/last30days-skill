@@ -1,13 +1,9 @@
 """Contract tests for the Grok Bot host slice of SKILL.md (R4, R12, R16; AE9).
 
-On a Grok Bot host the model-facing contract must drive X through the
-official path only: the X connector lane first, the X API bearer or the xAI
-key as backups, keys written only through the engine's ``setup --store-key``
-path, and no browser-session step of any kind. These tests read SKILL.md as
-text - the model's runtime contract - the way tests/test_onboarding_contract.py
-and tests/test_codex_host_contract.py do, and slice the Grok Bot passages so a
-word that is fine elsewhere (the cookie recipes for Linux / Mac mini) cannot
-satisfy or fail an assertion here.
+On a Grok Bot host the model-facing contract must use official X access: the
+connector lane first, bearer or xAI backups configured privately by the owner,
+and no browser-session step. Scope checks to Grok passages so wording that is
+valid for other hosts cannot mask violations here.
 """
 
 from __future__ import annotations
@@ -132,7 +128,6 @@ class TestGrokBotProseFlow(unittest.TestCase):
             "generated_at",
             "window-unsupported",
             "setup --store-key",
-            "about the last week",
             "SETUP_COMPLETE=true",
             "X_DECLINED=grok-bot",
         ):
@@ -161,17 +156,19 @@ class TestGrokBotProseFlow(unittest.TestCase):
         self.assertLess(connector, bearer)
 
     def test_bearer_coverage_caveat_never_implies_parity(self):
-        self.assertIn(
-            "recent posts, about the last week, unless your X developer project has full-archive access",
-            self.flow,
-        )
-        self.assertIn("X developer console", self.flow)
-        self.assertIn("console.x.ai", self.flow)
+        backup = _slice_between(self.flow, "**3. Backup key", "**4. Setup")
+        self.assertIn("X_BEARER_TOKEN", backup)
+        self.assertNotIn("full 30-day coverage", backup)
+        manual = _slice_between(_text(), "**X/Twitter (pick one", "**X on Linux / Mac mini (repair).**")
+        self.assertIn("Recent posts", manual)
+        self.assertIn("full-archive access", manual)
 
-    def test_key_persistence_only_through_engine_and_masked(self):
-        self.assertIn("setup --store-key", self.flow)
-        self.assertIn("=****", self.flow)
-        self.assertIn("never echo the value back", self.flow)
+    def test_backup_key_is_owner_managed_without_agent_secret_capture(self):
+        backup = _slice_between(self.flow, "**3. Backup key", "**4. Setup")
+        self.assertIn("setup --store-key <NAME>", backup)
+        self.assertIn("own device with private stdin", backup)
+        self.assertIn("agent never receives, prints, or writes the value through chat or tool calls", backup)
+        self.assertIn("Check only named key presence", backup)
         for line in self.flow.splitlines():
             if not re.search(r"\b(echo|printf)\b", line):
                 continue
@@ -288,13 +285,14 @@ class TestManualSetupGuide(unittest.TestCase):
         bullets = [line for line in x_section.splitlines() if line.startswith("- ")]
         self.assertTrue(bullets, "no X bullets in the Manual Setup Guide")
         self.assertIn("X_BEARER_TOKEN", bullets[0])
-        self.assertIn("about a week", bullets[0])
+        self.assertIn("full-archive access", bullets[0])
 
     def test_grok_bot_repair_paragraph_is_official_only(self):
         para = _slice_between(self.manual, "**X on a Grok Bot (repair).**", "**X on Linux / Mac mini (repair).**")
         self.assertEqual([], _forbidden_hits(para))
-        for token in ("connect X", "X_BEARER_TOKEN", "about the last week", "XAI_API_KEY", "top up"):
+        for token in ("X for Grok Bot", "X_BEARER_TOKEN", "XAI_API_KEY", "payment-required", "X developer console"):
             self.assertIn(token, para, token)
+        self.assertIn("recent posts unless the project has archive access", para)
 
 
 class TestSecurityAndFrontmatter(unittest.TestCase):
@@ -311,6 +309,19 @@ class TestSecurityAndFrontmatter(unittest.TestCase):
         self.assertIn("X connector", security)
         overview = _slice_between(text, "**Permissions overview:**", "Research ANY topic")
         self.assertIn("api.x.com", overview)
+    def test_current_session_cookie_denial_contract(self):
+        text = _text()
+        gate = _slice_between(text, "**Research cookie gate:**", "**First-run detection")
+        self.assertIn("--no-browser-cookies", gate)
+        self.assertIn("explicitly opted into browser-cookie access in this session", gate)
+        self.assertIn("Existing config, prior setup, or an old consent marker does not authorize", gate)
+        manual = _slice_between(text, "### Manual Setup Guide", "## CRITICAL: Parse User Intent")
+        self.assertIn("This setting alone is not consent", manual)
+        # The documented denial flag must actually prevent the engine from reading cookies.
+        import last30days as cli
+
+        args, extra = cli.build_parser().parse_known_args(["--no-browser-cookies", "example"])
+        self.assertEqual("off", cli._config_policy_for_args(args, "example", extra).browser_cookies)
 
 
 class TestConfigurationGrokBotSubsection(unittest.TestCase):

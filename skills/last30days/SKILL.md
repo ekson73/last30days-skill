@@ -720,7 +720,7 @@ The magic of /last30days is Reddit comments + X posts together - and both are fr
 - `XQUIK_API_KEY=xxx` - keyless-style X via Xquik.
 - `AUTH_TOKEN` + `CT0` - sensitive X cookies: prefer official API access. If the owner explicitly chooses cookie access, they configure these privately on their device; never collect cookie values through chat or agent tools.
 
-**X on a Grok Bot (repair).** On a `LAST30DAYS_HOST=grok-bot` host X runs only through official access: connect the "X for Grok Bot" plugin for full 30-day coverage, or have the owner configure `X_BEARER_TOKEN` (recent posts unless the project has archive access) or `XAI_API_KEY` privately on their device. If X API credits are exhausted (`payment-required`), the owner can top them up in the X developer console. Linux / Mac mini cookie repair does not apply on a Grok Bot.
+**X on a Grok Bot (repair).** On a `LAST30DAYS_HOST=grok-bot` host X runs only through official access: connect the "X for Grok Bot" plugin for full 30-day coverage, or have the owner configure `X_BEARER_TOKEN` (recent posts unless the project has archive access) or `XAI_API_KEY` privately on their device. If X API credits are exhausted (`payment-required`), the owner can top them up in the X developer console.
 
 **X on Linux / Mac mini (repair).** These hosts (never a `LAST30DAYS_HOST=grok-bot` host) can't decrypt a local Chrome cookie store, so if X returns nothing there, feed bird a cookie pair one of these ways (a MacBook does NOT do any of this — it uses its Keychain / Firefox / Safari extract; do not launch box-chrome on a MacBook):
 - **agentcookie sidecar:** install the `agentcookie` CLI so the engine can read your `auth_token`/`ct0` from it automatically. Nothing to configure; `AGENTCOOKIE=off` disables it.
